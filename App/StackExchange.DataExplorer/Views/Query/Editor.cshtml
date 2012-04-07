@@ -1,0 +1,75 @@
+﻿@model QuerySetViewModel
+@using StackExchange.DataExplorer
+@using StackExchange.DataExplorer.Helpers
+@using StackExchange.DataExplorer.Models
+@using StackExchange.DataExplorer.ViewModel
+@{
+    Layout = "~/Views/Shared/Query.cshtml";
+    this.SetPageTitle("Query " + Current.Controller.Site.LongName + " - Stack Exchange Data Explorer");
+
+    var revision = Model != null ?  Model.CurrentRevision : null;
+    
+    string sql = null, name = null, description = null;
+    
+    if (revision != null)
+    {
+        sql = revision.Query.QueryBody;
+        name = revision.QuerySet.Title;
+        description = revision.QuerySet.Description;
+    }
+
+    sql = Html.Encode(sql);
+}
+
+@section Metadata
+{
+    <h2><input type="text" id="title" name="title" value="@name" size="40" placeholder="Enter a title for your query" maxlength="100" /></h2>
+    <p id="query-description-text">@(Model != null && Model.QuerySet != null ? Model.QuerySet.Description : "")</p>
+    <a id="edit-query-description" href="#">edit description</a>
+    <textarea style="display:none" name="description" id="query-description" placeholder='enter a description'>@(Model != null && Model.QuerySet != null ? Model.QuerySet.Description : "")</textarea>
+    
+    <script type="text/javascript">
+        $(function () {
+            $("#edit-query-description").click(function () {
+                $("#edit-query-description").hide();
+                $("#query-description-text").hide();
+                $("#query-description").show();
+                return false;
+            });
+        });
+    </script>
+}
+
+<div id="editor">
+    <div id="editor-panel" class="left-group compact">
+        <textarea id="sql" name="sql" rows="26">@Html.Raw(sql)</textarea>
+    </div>
+    <div id="schema" class="right-group">
+        <span class="heading">Database Schema
+            <span class="buttons">
+                <span class="button expand" title="expand all tables">expand</span>
+                <span class="button collapse" title="collapse all tables">collapse</span>
+            </span>
+        </span>
+        <ul>
+        @foreach (TableInfo table in (IEnumerable<TableInfo>)ViewData["Tables"])
+        {
+            <li>
+                <span class="schema-table">@table.Name</span>
+                <dl>
+                @for (int i = 0; i < table.ColumnNames.Count; i++)
+                {
+                    <dt>@table.ColumnNames[i]</dt>
+                    <dd class="cm-variable-2">@table.DataTypes[i]</dd>
+                }
+                </dl>
+            </li>
+        }
+        </ul>
+    </div>
+    @Html.Partial("RevisionHistory", Model)
+</div>
+<ul id="editor-toolbar" class="linkbar compact">
+    <li id="permalink" class="result-option"><a class="templated" href="/:site/query/:id:slug:params">permalink</a></li>
+    <li id="schema-toggle">hide sidebar</li>
+</ul>
